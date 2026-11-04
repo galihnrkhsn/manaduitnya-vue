@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="50%" stop-color="#059669" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+    <linearGradient id="coinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#064e3b" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- iOS App Icon Squircle Background -->
+  <rect width="512" height="512" rx="115" fill="url(#brandGrad)" />
+
+  <!-- Background decorative glowing circle -->
+  <circle cx="390" cy="120" r="130" fill="#ffffff" fill-opacity="0.08" />
+
+  <!-- Wallet Body -->
+  <g filter="url(#shadow)">
+    <!-- Main Wallet Pocket -->
+    <rect x="100" y="150" width="312" height="230" rx="36" fill="#ffffff" />
+    
+    <!-- Top Card / Bill peeking out -->
+    <rect x="140" y="118" width="180" height="50" rx="14" fill="#a7f3d0" />
+    <rect x="170" y="98" width="130" height="40" rx="12" fill="#d1fae5" />
+    
+    <!-- Wallet Flap / Closure -->
+    <path d="M260 215 H392 C403.046 215 412 223.954 412 235 V295 C412 306.046 403.046 315 392 315 H260 C232.386 315 210 292.614 210 265 C210 237.386 232.386 215 260 215 Z" fill="#ecfdf5" stroke="#10b981" stroke-width="4" />
+    
+    <!-- Gold Coin / Fastener Button -->
+    <circle cx="260" cy="265" r="22" fill="url(#coinGrad)" stroke="#d97706" stroke-width="3" />
+    <text x="260" y="273" font-size="20" font-weight="900" font-family="-apple-system, BlinkMacSystemFont, sans-serif" fill="#78350f" text-anchor="middle">Rp</text>
+  </g>
+</svg>
+

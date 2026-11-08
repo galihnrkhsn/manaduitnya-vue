@@ -42,7 +42,7 @@ import IOSInstallPrompt from '@/components/IOSInstallPrompt.vue'
 
 const route          = useRoute()
 const isAddModalOpen = ref(false)
-const apiBaseUrl     = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'
+const apiBaseUrl     = import.meta.env.VITE_API_BASE_URL || 'http://manaduitnya.runsap.net/api'
 
 // Halaman guest (login/register) → tanpa navbar & footer
 const guestRoutes = ['Login', 'Register']

@@ -1,12 +1,14 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useFinanceStore } from '@/stores/finance'
 
 // Lazy-load semua halaman (lebih ringan — hanya di-load saat dibutuhkan)
-const LoginView      = () => import('@/views/LoginView.vue')
-const RegisterView   = () => import('@/views/RegisterView.vue')
-const DashboardView  = () => import('@/views/DashboardView.vue')
-const TransactionsView = () => import('@/views/TransactionsView.vue')
-const WalletsView    = () => import('@/views/WalletsView.vue')
+const LoginView         = () => import('@/views/LoginView.vue')
+const RegisterView      = () => import('@/views/RegisterView.vue')
+const DashboardView     = () => import('@/views/DashboardView.vue')
+const TransactionsView  = () => import('@/views/TransactionsView.vue')
+const WalletsView       = () => import('@/views/WalletsView.vue')
+const BudgetsView       = () => import('@/views/BudgetsView.vue')
 
 const routes = [
   // ── Guest-only routes ────────────────────────────────────────
@@ -46,6 +48,12 @@ const routes = [
     component: WalletsView,
     meta: { requiresAuth: true },
   },
+  {
+    path: '/budgets',
+    name: 'Budgets',
+    component: BudgetsView,
+    meta: { requiresAuth: true },
+  },
 
   // ── Fallback ──────────────────────────────────────────────────
   {
@@ -61,10 +69,9 @@ const router = createRouter({
 })
 
 // ── Navigation Guard ──────────────────────────────────────────
-router.beforeEach((to) => {
-  // Pinia store baru bisa diakses setelah app mount,
-  // tapi di sini aman karena guard dipanggil setelah router.install
+router.beforeEach(async (to) => {
   const auth = useAuthStore()
+  const loggedIn = useAuthStore.isAuthenticated
 
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
     // Belum login → lempar ke login, simpan tujuan asal
@@ -74,6 +81,10 @@ router.beforeEach((to) => {
   if (to.meta.guestOnly && auth.isAuthenticated) {
     // Sudah login tapi akses /login atau /register → lempar ke dashboard
     return { name: 'Dashboard' }
+  }
+
+  if (loggedIn) {
+    await useFinanceStore().loadMasterData()
   }
 })
 

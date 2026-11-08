@@ -173,6 +173,7 @@ import {
   AlertCircle, CheckCircle, Loader2,
 } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
+import { useFinanceStore } from '@/stores/finance'
 
 const router    = useRouter()
 const authStore = useAuthStore()
@@ -266,6 +267,7 @@ const handleRegister = async () => {
   })
 
   if (result.success) {
+    await useFinanceStore().loadMasterData()
     if (result.autoLogin) {
       // BE langsung kasih token → langsung masuk ke dashboard
       router.push('/dashboard')

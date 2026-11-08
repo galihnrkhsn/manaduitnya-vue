@@ -116,6 +116,7 @@ import { reactive, ref, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Wallet, Mail, Lock, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
+import { useFinanceStore } from '@/stores/finance'
 
 const router  = useRouter()
 const route   = useRoute()
@@ -165,6 +166,7 @@ const handleLogin = async () => {
 
   const result = await authStore.login({ email: form.email, password: form.password })
   if (result.success) {
+    await useFinanceStore().loadMasterData()
     const redirect = route.query.redirect || '/dashboard'
     router.push(redirect)
   }

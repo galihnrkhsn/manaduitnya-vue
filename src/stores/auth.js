@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import apiClient from '@/services/api'
+import { useFinanceStore } from '@/stores/finance'
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref(localStorage.getItem('manaduitnya_token') || '')
@@ -86,6 +87,25 @@ export const useAuthStore = defineStore('auth', () => {
     user.value  = null
     localStorage.removeItem('manaduitnya_token')
     localStorage.removeItem('manaduitnya_user')
+    useFinanceStore().reset()
+  }
+
+  const isTokenExpire = (t) => {
+    try {
+      const payload = JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+      return payload.exp * 1000 < Date.now()
+    } catch {
+      return true
+    }
+  }
+
+  const checkSession = () => {
+    if (!token.value) return false
+    if (isTokenExpire(token.value)) {
+      logout()
+      return false
+    }
+    return false
   }
 
   return {
@@ -98,5 +118,6 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     register,
     logout,
+    checkSession,
   }
 })

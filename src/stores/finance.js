@@ -3,74 +3,70 @@ import { ref, computed } from 'vue'
 import apiClient from '@/services/api'
 
 export const useFinanceStore = defineStore('finance', () => {
-  const transactions = ref([])
-
-  const wallets = ref([])
-
-  const categories = ref([
-    'Gaji',
-    'Bonus',
-    'Investasi',
-    'Makanan & Minuman',
-    'Kebutuhan',
-    'Transportasi',
-    'Tagihan',
-    'Hiburan',
-    'Kesehatan',
-    'Lainnya',
-  ])
-
+  const categories    = ref([])
+  const summary       = ref(null)
+  const budgets       = ref([])
+  const masterLoaded  = ref(false)
+  let masterPromise   = null
+  
   const loading = ref(false)
   const error = ref(null)
 
-  // Computed statistics
-  const totalBalance = computed(() => {
-    return wallets.value.reduce((acc, w) => acc + Number(w.balance || 0), 0)
-  })
+  const transactions = computed(() => summary.value?.recentTransactions ?? [])
+  const wallets      = computed(() => summary.value?.wallets ?? [])
+  const totalBalance = computed(() => Number(summary.value?.totalBalance ?? 0))
+  const totalIncome  = computed(() => Number(summary.value?.income ?? 0))
+  const totalExpense = computed(() => Number(summary.value?.expense ?? 0))
+  const netAmount    = computed(() => Number(summary.value?.net ?? 0))
+  const quotes       = computed(() => summary.value?.quotes ?? [])
 
-  const totalIncome = computed(() => {
-    return transactions.value
-      .filter((t) => t.type === 'INCOME')
-      .reduce((acc, t) => acc + Number(t.amount || 0), 0)
-  })
+  // const fetchTransactions = async () => {
+  //   loading.value = true
+  //   error.value = null
+  //   try {
+  //     const response = await apiClient.get('/transactions')
+  //     const data = response.data?.data || response.data
+  //     if (Array.isArray(data)) {
+  //       transactions.value = data
+  //     }
+  //   } catch (err) {
+  //     error.value = err.response?.data?.message || 'Gagal memuat transaksi.'
+  //   } finally {
+  //     loading.value = false
+  //   }
+  // }
 
-  const totalExpense = computed(() => {
-    return transactions.value
-      .filter((t) => t.type === 'EXPENSE')
-      .reduce((acc, t) => acc + Number(t.amount || 0), 0)
-  })
-
-  const fetchTransactions = async () => {
+  const fetchCategories = async () => {
     loading.value = true
     error.value = null
     try {
-      const response = await apiClient.get('/transactions')
+      const response = await apiClient.get('/categories')
       const data = response.data?.data || response.data
       if (Array.isArray(data)) {
-        transactions.value = data
+        categories.value = data
       }
     } catch (err) {
-      error.value = err.response?.data?.message || 'Gagal memuat transaksi.'
+      error.value = err.response?.data?.message || 'Gagal memuat kategori.'
     } finally {
       loading.value = false
     }
   }
 
-  const fetchWallets = async () => {
-    loading.value = true
-    error.value = null
-    try {
-      const response = await apiClient.get('/wallets')
-      const data = response.data?.data || response.data
-      if (Array.isArray(data)) {
-        wallets.value = data
-      }
-    } catch (err) {
-      error.value = err.response?.data?.message || 'Gagal memuat dompet.'
-    } finally {
-      loading.value = false
-    }
-  }
+  // const fetchWallets = async () => {
+  //   loading.value = true
+  //   error.value = null
+  //   try {
+  //     const response = await apiClient.get('/wallets')
+  //     const data = response.data?.data || response.data
+  //     if (Array.isArray(data)) {
+  //       wallets.value = data
+  //     }
+  //   } catch (err) {
+  //     error.value = err.response?.data?.message || 'Gagal memuat dompet.'
+  //   } finally {
+  //     loading.value = false
+  //   }
+  // }
 
   const addTransaction = async (txData) => {
     try {
@@ -93,10 +89,59 @@ export const useFinanceStore = defineStore('finance', () => {
     }
   }
 
+  const initialized = ref(false)
+  const loadInitialData = async () => {
+    if (initialized.value) return
+    initialized.value = true
+    await Promise.all([fetchCategories()])
+    if (error.value) initialized.value = false
+  }
+
   const reset = () => {
     transactions.value = []
     wallets.value = []
+    categories.value = []
     error.value = null
+    initialized.value = false
+    budgets.value = []
+    summary.value = null
+    masterLoaded.value = false
+    error.value = null
+  }
+
+  const fetchSummary = async (from, to) => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await apiClient.get('/reports/summary', {
+        params: { from, to },
+      })
+      const data = response.data?.data || response.data
+      if (data && typeof data === 'object') {
+        summary.value = data
+      }
+    } catch (err) {
+      error.value = err.response?.data?.message || 'Gagal memuat summary.'
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const fetchBudgets = async () => {
+    const response = await apiClient.get('budgets')
+    const data = response.data?.data || response.data
+    if (Array.isArray(data)) budgets.value = data
+  }
+
+  const loadMasterData = async ({force = false} = {}) => {
+    if (masterLoaded.value && !force) return
+    if (masterPromise) return masterPromise
+
+    masterPromise = Promise.all([fetchCategories(), fetchBudgets()])
+      .then(() => {masterLoaded.value = !error.value})
+      .finally(() => {masterPromise = null})
+
+      return masterPromise
   }
 
   return {
@@ -108,10 +153,14 @@ export const useFinanceStore = defineStore('finance', () => {
     totalBalance,
     totalIncome,
     totalExpense,
-    fetchTransactions,
-    fetchWallets,
+    netAmount,
+    quotes,
+    fetchCategories,
     addTransaction,
     deleteTransaction,
     reset,
+    loadInitialData,
+    fetchSummary,
+    loadMasterData,
   }
 })

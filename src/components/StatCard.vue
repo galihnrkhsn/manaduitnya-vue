@@ -3,11 +3,11 @@
     <div class="flex items-center justify-between">
       <div>
         <p class="text-xs font-semibold uppercase tracking-wider text-ink/60">{{ title }}</p>
-        <p class="text-2xl font-extrabold text-ink mt-1">
+        <p class="text-lg font-bold text-ink mt-1 tracking-tight">
           {{ formattedAmount }}
         </p>
       </div>
-      <div :class="['w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-sm', colorClass]">
+      <div :class="['w-8 h-8 flex items-center justify-center']">
         <slot name="icon"></slot>
       </div>
     </div>

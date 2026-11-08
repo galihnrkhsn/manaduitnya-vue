@@ -7,7 +7,7 @@
         <div class="flex items-center gap-6">
           <router-link to="/" class="flex items-center gap-2.5 ios-active-scale">
             <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-brand flex items-center justify-center text-white shadow-md shadow-brand/25">
-              <Wallet class="w-5 h-5" />
+              <img src="/public/pwa-192x192.png" alt="_">
             </div>
             <div>
               <span class="text-lg sm:text-xl font-bold text-ink">ManaDuitnya</span>
@@ -40,6 +40,15 @@
               <CreditCard class="w-4 h-4" />
               Dompet & Rekening
             </router-link>
+
+            <router-link
+              to="/budgets"
+              class="px-3.5 py-2 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2"
+              :class="$route.path === '/budgets' ? 'bg-brand/10 text-brand-dark' : 'text-ink/70 hover:text-ink hover:bg-card'"
+            >
+              <WalletCards class="w-4 h-4"/>
+              Anggaran
+            </router-link>
           </nav>
         </div>
 
@@ -54,33 +63,17 @@
           </button>
 
           <!-- User Menu / Status -->
-          <div v-if="authStore.isAuthenticated" class="flex items-center gap-2 pl-2 sm:border-l sm:border-slate-200">
-            <div class="hidden sm:block text-right">
-              <div class="text-xs font-bold text-ink">{{ authStore.user?.name || 'Pengguna' }}</div>
-              <div class="text-[10px] text-ink/60">{{ authStore.user?.email || 'Aktif' }}</div>
-            </div>
-            <button
-              @click="authStore.logout"
-              title="Logout"
-              class="p-2 text-ink/60 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors ios-active-scale"
-            >
-              <LogOut class="w-4 h-4" />
-            </button>
+          <div class="hidden sm:block text-right">
+            <div class="text-xs font-bold text-ink">{{ authStore.user?.name || 'Pengguna' }}</div>
+            <div class="text-[10px] text-ink/60">{{ authStore.user?.email || 'Aktif' }}</div>
           </div>
-          <div v-else class="flex items-center gap-2">
-            <router-link
-              to="/login"
-              class="px-3 py-1.5 text-xs font-semibold text-ink/80 hover:bg-card rounded-xl transition-colors"
-            >
-              Masuk
-            </router-link>
-            <button
-              @click="authStore.demoLogin('John Doe')"
-              class="px-2.5 py-1 text-[11px] font-bold text-brand-dark bg-brand/10 border border-brand/20 rounded-xl transition-colors ios-active-scale"
-            >
-              Demo
-            </button>
-          </div>
+          <button
+            @click="authStore.logout"
+            title="Logout"
+            class="p-2 text-ink/60 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors ios-active-scale"
+          >
+            <LogOut class="w-4 h-4" />
+          </button>
         </div>
       </div>
     </div>
@@ -97,6 +90,14 @@
         <LayoutDashboard class="w-5 h-5 mb-0.5" />
         <span class="text-[10px]">Ringkasan</span>
       </router-link>
+      <router-link
+        to="/transactions"
+        class="flex flex-col items-center justify-center flex-1 h-full ios-active-scale"
+        :class="$route.path === '/transactions' ? 'text-brand-dark font-bold' : 'text-ink/40 font-medium'"
+      >
+        <Receipt class="w-5 h-5 mb-0.5" />
+        <span class="text-[10px]">Transaksi</span>
+      </router-link>
 
       <button
         @click="triggerAdd"
@@ -109,12 +110,12 @@
       </button>
 
       <router-link
-        to="/transactions"
+        to="/budgets"
         class="flex flex-col items-center justify-center flex-1 h-full ios-active-scale"
-        :class="$route.path === '/transactions' ? 'text-brand-dark font-bold' : 'text-ink/40 font-medium'"
+        :class="$route.path === '/budgets' ? 'text-brand-dark font-bold' : 'text-ink/40 font-medium'"
       >
-        <Receipt class="w-5 h-5 mb-0.5" />
-        <span class="text-[10px]">Transaksi</span>
+        <WalletCards class="w-5 h-5 mb-0.5" />
+        <span class="text-[10px]">Anggaran</span>
       </router-link>
 
       <router-link
@@ -130,7 +131,7 @@
 </template>
 
 <script setup>
-import { Wallet, LayoutDashboard, Receipt, CreditCard, Plus, LogOut } from 'lucide-vue-next'
+import { Wallet, LayoutDashboard, Receipt, CreditCard, Plus, LogOut, WalletCards } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 
 const emit = defineEmits(['open-add-modal'])

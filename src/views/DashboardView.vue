@@ -266,7 +266,7 @@
               ]"
             >
               {{ getAmountPrefix(tx) }}
-              {{ isBalanceHidden ? 'Rp ������' : formatCurrency(tx.amount) }}
+              {{ isBalanceHidden ? 'Rp ******' : formatCurrency(tx.amount) }}
             </p>
             <p class="text-[10px] text-ink/40 mt-0.5">
               {{ formatDate(tx.transactionDate) }}

@@ -1,4 +1,4 @@
-ï»¿<template>
+<template>
   <div class="space-y-5 sm:space-y-6">
     <!-- Header / Welcome Banner -->
     <div class="bg-gradient-to-tr from-brand-dark via-brand to-teal-500 rounded-3xl p-5 sm:p-7 text-white shadow-lg shadow-brand/15 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -172,7 +172,7 @@
           <!-- Card Middle: Simulated Card Number -->
           <div class="relative z-10 my-auto">
             <p class="text-xs sm:text-sm font-mono tracking-widest text-white/80">
-              â€¢â€¢â€¢â€¢ â€¢â€¢â€¢â€¢ â€¢â€¢â€¢â€¢ {{ getCardTail(wallet.id, idx) }}
+              •••• •••• •••• {{ getCardTail(wallet.id, idx) }}
             </p>
           </div>
 
@@ -181,7 +181,7 @@
             <div>
               <p class="text-[9px] sm:text-[10px] text-white/70 uppercase tracking-wider font-medium">Saldo Tersedia</p>
               <p class="text-base sm:text-lg font-bold font-mono tracking-tight text-white">
-                {{ isBalanceHidden ? 'Rp â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢' : formatCurrency(wallet.balance) }}
+                {{ isBalanceHidden ? 'Rp ••••••••' : formatCurrency(wallet.balance) }}
               </p>
             </div>
             <CreditCard class="w-4 h-4 text-white/60 mb-1" />
@@ -255,9 +255,9 @@
                   ></span>
                   <span>{{ tx.categoryName || tx.category || 'Umum' }}</span>
                 </span>
-                <span>â€¢</span>
+                <span>•</span>
                 <span v-if="getTxType(tx) === 'TRANSFER' && (tx.toWalletName || tx.destinationWalletName)">
-                  {{ tx.walletName || tx.wallet }} â†’ {{ tx.toWalletName || tx.destinationWalletName }}
+                  {{ tx.walletName || tx.wallet }} ? {{ tx.toWalletName || tx.destinationWalletName }}
                 </span>
                 <span v-else>{{ tx.walletName || 'Dompet' }}</span>
               </div>
@@ -272,7 +272,7 @@
               ]"
             >
               {{ getAmountPrefix(tx) }}
-              {{ isBalanceHidden ? 'Rp â€¢â€¢â€¢â€¢â€¢â€¢' : formatCurrency(tx.amount) }}
+              {{ isBalanceHidden ? 'Rp ••••••' : formatCurrency(tx.amount) }}
             </p>
             <p class="text-[10px] text-ink/40 mt-0.5">
               {{ formatDate(tx.transactionDate) }}
@@ -333,15 +333,15 @@ const to   = toDateStr(new Date(now.getFullYear(), now.getMonth() + 1, 0))
 const currentMonthNumber = now.getMonth() + 1
 
 const overbudgetCategories = computed(() => {
-  const currentM = currentMonthNumber
+  const yymm = from.substring(0, 7)
   const list = financeStore.budgets.filter((b) => {
-    const bMonth = Number(b.month || b.Month || 0)
-    return bMonth === 0 || bMonth === currentM
+    if (!b.month) return true
+    return b.month.startsWith(yymm)
   })
 
   return list.map((b) => {
-    const catId = b.categoryId || b.CategoryId
-    const catName = b.categoryName || b.category?.name || b.category || ''
+    const catId = b.categoryId
+    const catName = b.category_name || b.categoryName || ''
 
     let spent = b.spent !== undefined ? Number(b.spent) : null
     if (spent === null || isNaN(spent)) {
@@ -356,7 +356,7 @@ const overbudgetCategories = computed(() => {
         .reduce((sum, tx) => sum + Number(tx.amount || 0), 0)
     }
 
-    const amount = Number(b.amount || b.Amount || 0)
+    const amount = Number(b.amount || 0)
     const percentage = amount > 0 ? Math.round((spent / amount) * 100) : 0
     return {
       categoryName: catName || 'Kategori',
@@ -370,8 +370,9 @@ const overbudgetCategories = computed(() => {
 
 onMounted(() => {
   financeStore.fetchSummary(from, to)
-  financeStore.fetchBudgets(currentMonthNumber)
+  financeStore.fetchBudgets(from)
   financeStore.fetchTransactions(from, to)
+  financeStore.fetchWallets()
   timer = setInterval(pickQuote, 15000)
 })
 
@@ -469,7 +470,7 @@ const getAmountClass = (tx) => {
 const getAmountPrefix = (tx) => {
   const type = getTxType(tx)
   if (type === 'INCOME') return '+ '
-  if (type === 'TRANSFER') return 'â‡„ '
+  if (type === 'TRANSFER') return '? '
   return '- '
 }
 

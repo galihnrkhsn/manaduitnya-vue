@@ -73,7 +73,7 @@
     <SkeletonLoader v-if="financeStore.loading && !financeStore.totalBalance" type="stat" :count="3" cols="3" />
 
     <!-- Stats Cards Row -->
-    <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
+    <div v-else class="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
       <StatCard
         class="col-span-2 sm:col-span-1"
         title="Saldo Saat Ini"

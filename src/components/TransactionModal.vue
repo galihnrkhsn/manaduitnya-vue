@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div v-if="isOpen" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
     <!-- Backdrop with blur -->
     <div
@@ -83,18 +83,6 @@
           />
         </div>
 
-        <!-- Title -->
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Judul Transaksi</label>
-          <input
-            v-model="form.title"
-            type="text"
-            required
-            placeholder="Contoh: Makan siang, Gaji, Top-up e-wallet..."
-            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand text-sm bg-slate-50/50 focus:bg-white transition-colors"
-          />
-        </div>
-
         <!-- Category (Only for non-transfer) -->
         <div v-if="form.type !== 'TRANSFER'">
           <label class="block text-xs font-semibold text-slate-600 mb-1">Kategori</label>
@@ -153,16 +141,11 @@
 
         <!-- Notes -->
         <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Catatan Tambahan (Opsional)</label>
-          <textarea
-            v-model="form.notes"
-            rows="2"
-            placeholder="Keterangan opsional..."
-            class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand text-xs sm:text-sm bg-slate-50/50 focus:bg-white transition-colors"
-          ></textarea>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Catatan (Opsional)</label>
+          <input v-model="form.notes" type="text" placeholder="cth. Makan siang, Gaji bulan ini..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand text-sm bg-slate-50/50 focus:bg-white transition-colors" />
         </div>
 
-        <!-- Submit Buttons -->
+                <!-- Submit Buttons -->
         <div class="flex items-center justify-end gap-2 pt-2 pb-2">
           <button
             type="button"
@@ -177,7 +160,7 @@
             :disabled="isSubmitting"
             class="flex-1 sm:flex-none px-6 py-2.5 text-xs sm:text-sm font-bold text-white bg-brand hover:bg-brand-dark rounded-xl shadow-md shadow-brand/20 transition-all ios-active-scale disabled:opacity-50 flex items-center justify-center gap-1.5"
           >
-            <span v-if="isSubmitting" class="animate-spin mr-1">⌛</span>
+            <span v-if="isSubmitting" class="animate-spin mr-1">?</span>
             <span>Simpan Transaksi</span>
           </button>
         </div>
@@ -284,35 +267,22 @@ const handleSubmit = async () => {
 
   const numericType = form.type === 'INCOME' ? 1 : form.type === 'TRANSFER' ? 3 : 2
   const selectedWalletObj = financeStore.wallets.find((w) => w.id === form.walletId)
-  const selectedToWalletObj = financeStore.wallets.find((w) => w.id === form.toWalletId)
-  const selectedCategoryObj = financeStore.categories.find((c) => (c.id || c.name) === form.categoryId)
+  const pad = (n) => String(n).padStart(2, '0')
+  const dt = new Date(form.datetime)
+  const transactionDate = `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())} ${pad(dt.getHours())}:${pad(dt.getMinutes())}:${pad(dt.getSeconds())}`
 
   const payload = {
-    title: form.title,
-    amount: Number(form.amount),
-    type: numericType,
     walletId: form.walletId,
-    walletName: selectedWalletObj?.name || '',
-    wallet: selectedWalletObj?.name || '',
-    transactionDate: new Date(form.datetime).toISOString(),
-    date: form.datetime,
-    notes: form.notes,
-    description: form.notes,
+    type: numericType,
+    amount: Number(form.amount),
+    note: form.notes || '',
+    transactionDate,
   }
 
   if (form.type === 'TRANSFER') {
     payload.toWalletId = form.toWalletId
-    payload.destinationWalletId = form.toWalletId
-    payload.toWalletName = selectedToWalletObj?.name || ''
-    payload.destinationWalletName = selectedToWalletObj?.name || ''
-    payload.toWallet = selectedToWalletObj?.name || ''
   } else {
     payload.categoryId = form.categoryId
-    payload.categoryName = selectedCategoryObj?.name || (typeof form.categoryId === 'string' ? form.categoryId : '')
-    payload.category = payload.categoryName
-    if (selectedCategoryObj?.color || selectedCategoryObj?.categoryColor) {
-      payload.categoryColor = selectedCategoryObj.color || selectedCategoryObj.categoryColor
-    }
   }
 
   const result = await financeStore.addTransaction(payload)

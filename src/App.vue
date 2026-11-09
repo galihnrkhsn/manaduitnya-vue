@@ -20,7 +20,7 @@
         <p>© 2026 ManaDuitnya.</p>
         <p class="flex items-center gap-1.5">
           <span class="w-1.5 h-1.5 rounded-full bg-brand animate-pulse"></span>
-          <span class="font-mono">{{ apiBaseUrl }}</span>
+          <span class="font-mono">Galih Nur Ikhsan</span>
         </p>
       </div>
     </footer>

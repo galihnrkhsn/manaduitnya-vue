@@ -1,10 +1,19 @@
 <template>
   <div class="space-y-5">
-    <div class="flex items-center gap-3">
-      <button @click="router.back()" class="p-2 rounded-xl hover:bg-card text-ink/60 ios-active-scale">
-        <ChevronLeft class="w-5 h-5" />
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <button @click="router.back()" class="p-2 rounded-xl hover:bg-card text-ink/60 ios-active-scale">
+          <ChevronLeft class="w-5 h-5" />
+        </button>
+        <h1 class="text-2xl font-extrabold text-ink tracking-tight">Kategori</h1>
+      </div>
+      <button
+        @click="openAdd"
+        class="flex items-center gap-1.5 px-4 py-2.5 bg-brand hover:bg-brand-dark text-white rounded-xl font-bold text-sm shadow-md shadow-brand/20 transition-all ios-active-scale"
+      >
+        <Plus class="w-4 h-4" />
+        Tambah
       </button>
-      <h1 class="text-2xl font-extrabold text-ink tracking-tight">Kategori</h1>
     </div>
 
     <!-- Filter Type -->
@@ -61,7 +70,7 @@
           <div class="w-12 h-1.5 bg-slate-300 rounded-full" />
         </div>
         <div class="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
-          <h3 class="text-base font-bold text-ink">Edit Kategori</h3>
+          <h3 class="text-base font-bold text-ink">{{ isEditing ? 'Edit Kategori' : 'Tambah Kategori' }}</h3>
           <button @click="showModal = false" class="text-ink/40 hover:text-ink p-1 rounded-full ios-active-scale">
             <X class="w-5 h-5" />
           </button>
@@ -76,6 +85,27 @@
               placeholder="cth. Makan & Minum"
               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink bg-card focus:bg-surface focus:outline-none focus:ring-2 focus:ring-brand"
             />
+          </div>
+          <div v-if="!isEditing" class="space-y-1">
+            <label class="text-xs font-semibold text-ink/70">Tipe</label>
+            <div class="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                @click="form.type = 2"
+                class="py-2.5 text-sm font-bold rounded-xl border transition-all ios-active-scale"
+                :class="form.type === 2 ? 'bg-rose-500 text-white border-rose-500' : 'bg-surface border-slate-200 text-ink/60'"
+              >
+                Pengeluaran
+              </button>
+              <button
+                type="button"
+                @click="form.type = 1"
+                class="py-2.5 text-sm font-bold rounded-xl border transition-all ios-active-scale"
+                :class="form.type === 1 ? 'bg-brand text-white border-brand' : 'bg-surface border-slate-200 text-ink/60'"
+              >
+                Pemasukan
+              </button>
+            </div>
           </div>
           <div class="space-y-1">
             <label class="text-xs font-semibold text-ink/70">Warna</label>
@@ -106,7 +136,7 @@
 <script setup>
 import { ref, computed, onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import { ChevronLeft, Pencil, Trash2, X, Loader2, AlertCircle } from 'lucide-vue-next'
+import { ChevronLeft, Pencil, Trash2, X, Loader2, AlertCircle, Plus } from 'lucide-vue-next'
 import apiClient from '@/services/api'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import { useFinanceStore } from '@/stores/finance'
@@ -120,6 +150,7 @@ const error = ref(null)
 const formError = ref(null)
 const isSubmitting = ref(false)
 const showModal = ref(false)
+const isEditing = ref(false)
 const activeTab = ref('expense')
 
 const tabs = [
@@ -154,7 +185,18 @@ onMounted(async () => {
   }
 })
 
+const openAdd = () => {
+  isEditing.value = false
+  form.id = null
+  form.name = ''
+  form.color = '#0D9488'
+  form.type = activeTab.value === 'income' ? 1 : 2
+  formError.value = null
+  showModal.value = true
+}
+
 const openEdit = (cat) => {
+  isEditing.value = true
   form.id = cat.id
   form.name = cat.name
   form.color = cat.color || '#0D9488'
@@ -167,11 +209,19 @@ const saveCategory = async () => {
   isSubmitting.value = true
   formError.value = null
   try {
-    await apiClient.put(`/categories/${form.id}`, {
-      name: form.name,
-      type: Number(form.type),
-      color: form.color,
-    })
+    if (isEditing.value) {
+      await apiClient.put(`/categories/${form.id}`, {
+        name: form.name,
+        type: Number(form.type),
+        color: form.color,
+      })
+    } else {
+      await apiClient.post('/categories', {
+        name: form.name,
+        type: Number(form.type),
+        color: form.color,
+      })
+    }
     await financeStore.fetchCategories()
     showModal.value = false
   } catch (err) {

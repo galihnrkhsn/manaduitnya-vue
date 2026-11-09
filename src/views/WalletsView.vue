@@ -32,36 +32,46 @@
       <div
         v-for="(wallet, idx) in wallets"
         :key="wallet.id"
-        class="relative overflow-hidden rounded-3xl p-5 text-white shadow-md transition-transform hover:-translate-y-0.5 cursor-pointer"
+        class="w-full h-40 sm:h-44 rounded-3xl p-4 sm:p-5 text-white shadow-md relative overflow-hidden flex flex-col justify-between transition-all hover:-translate-y-1 hover:shadow-xl cursor-pointer bg-gradient-to-br"
         :class="cardGradient(idx)"
         @click="openEditModal(wallet)"
       >
-        <!-- Decorative circle -->
-        <div class="absolute -right-8 -top-8 w-36 h-36 rounded-full bg-white/10 pointer-events-none" />
-        <div class="absolute right-8 -bottom-10 w-24 h-24 rounded-full bg-white/5 pointer-events-none" />
+        <!-- Watermark decoration -->
+        <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-white/10 rounded-full blur-xl pointer-events-none" />
 
-        <!-- Top row: icon + type badge -->
-        <div class="relative z-10 flex items-center justify-between mb-6">
-          <div class="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center">
-            <component :is="walletIcon(wallet.type)" class="w-5 h-5 text-white" />
-          </div>
-          <span class="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full bg-black/20">
-            {{ wallet.type || 'Dompet' }}
-          </span>
-        </div>
-
-        <!-- Name -->
-        <div class="relative z-10 mb-4">
-          <h3 class="text-base font-bold truncate">{{ wallet.name }}</h3>
-        </div>
-
-        <!-- Balance -->
-        <div class="relative z-10 pt-3 border-t border-white/20 flex items-end justify-between">
+        <!-- Card Top: Name & Chip -->
+        <div class="flex items-start justify-between relative z-10">
           <div>
-            <p class="text-[11px] text-white/60 mb-0.5">Saldo</p>
-            <p class="text-xl font-extrabold tracking-tight">{{ formatCurrency(wallet.balance ?? wallet.initialBalance) }}</p>
+            <p class="text-[10px] text-white/70 uppercase tracking-widest font-semibold">
+              {{ wallet.type || 'Akun' }}
+            </p>
+            <h3 class="text-base sm:text-lg font-bold tracking-tight text-white drop-shadow-xs">
+              {{ wallet.name }}
+            </h3>
           </div>
-          <Pencil class="w-3.5 h-3.5 text-white/40 mb-1" />
+          <!-- EMV Chip & NFC -->
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-6 rounded-md bg-amber-300/30 border border-amber-300/60 flex items-center justify-center p-1">
+              <div class="w-full h-full border border-amber-200/40 rounded-xs grid grid-cols-2 gap-0.5 opacity-80">
+                <div class="border-b border-r border-amber-200/40" />
+                <div class="border-b border-amber-200/40" />
+                <div class="border-r border-amber-200/40" />
+                <div />
+              </div>
+            </div>
+            <Wifi class="w-4 h-4 text-white/70 rotate-90" />
+          </div>
+        </div>
+
+        <!-- Card Bottom: Balance -->
+        <div class="relative z-10 pt-2 border-t border-white/15 flex items-end justify-between">
+          <div>
+            <p class="text-[9px] sm:text-[10px] text-white/70 uppercase tracking-wider font-medium">Saldo Tersedia</p>
+            <p class="text-base sm:text-lg font-bold font-mono tracking-tight text-white">
+              {{ formatCurrency(wallet.balance ?? wallet.initialBalance) }}
+            </p>
+          </div>
+          <CreditCard class="w-4 h-4 text-white/60 mb-1" />
         </div>
       </div>
     </div>
@@ -112,7 +122,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
-import { Plus, CreditCard, X, Loader2, AlertCircle, Pencil, Banknote, Wallet, TrendingUp, Smartphone } from 'lucide-vue-next'
+import { Plus, CreditCard, X, Loader2, AlertCircle, Wifi } from 'lucide-vue-next'
 import CurrencyInput from '@/components/CurrencyInput.vue'
 import { useFinanceStore } from '@/stores/finance'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
@@ -140,15 +150,6 @@ const gradients = [
 ]
 
 const cardGradient = (idx) => gradients[idx % gradients.length]
-
-const walletIcon = (type) => {
-  const t = String(type || '').toLowerCase()
-  if (t.includes('bank') || t.includes('rekening')) return Banknote
-  if (t.includes('cash') || t.includes('tunai')) return Wallet
-  if (t.includes('invest')) return TrendingUp
-  if (t.includes('wallet') || t.includes('e-wallet') || t.includes('digital')) return Smartphone
-  return CreditCard
-}
 
 const formatCurrency = (val) => {
   return new Intl.NumberFormat('id-ID', {

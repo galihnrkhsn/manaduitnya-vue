@@ -19,7 +19,7 @@ export const useFinanceStore = defineStore('finance', () => {
     }
     return summary.value?.recentTransactions ?? []
   })
-  const wallets      = computed(() => summary.value?.wallets ?? [])
+  const wallets      = ref([])
   const totalBalance = computed(() => Number(summary.value?.totalBalance ?? 0))
   const totalIncome  = computed(() => Number(summary.value?.income ?? 0))
   const totalExpense = computed(() => Number(summary.value?.expense ?? 0))
@@ -40,17 +40,16 @@ export const useFinanceStore = defineStore('finance', () => {
         params.endDate = to
       }
       const response = await apiClient.get('/transactions', { params })
-      const data = response.data?.data || response.data
+      const data = response.data?.data ?? response.data
       if (Array.isArray(data)) {
         rawTransactions.value = data
       }
     } catch (err) {
-      // Fallback ke fetchSummary jika /transactions butuh query atau fallback
       const now = new Date()
       const fallbackFrom = from || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
       const fallbackTo = to || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()).padStart(2, '0')}`
       await fetchSummary(fallbackFrom, fallbackTo)
-      error.value = err.response?.data?.message || null
+      error.value = err.response?.data?.message ?? err.message ?? null
     } finally {
       loading.value = false
     }
@@ -61,37 +60,72 @@ export const useFinanceStore = defineStore('finance', () => {
     error.value = null
     try {
       const response = await apiClient.get('/categories')
-      const data = response.data?.data || response.data
+      const data = response.data?.data ?? response.data
       if (Array.isArray(data)) {
         categories.value = data
       }
     } catch (err) {
-      error.value = err.response?.data?.message || 'Gagal memuat kategori.'
+      error.value = err.response?.data?.message ?? err.message ?? 'Gagal memuat kategori.'
     } finally {
       loading.value = false
     }
   }
 
-  // const fetchWallets = async () => {
-  //   loading.value = true
-  //   error.value = null
-  //   try {
-  //     const response = await apiClient.get('/wallets')
-  //     const data = response.data?.data || response.data
-  //     if (Array.isArray(data)) {
-  //       wallets.value = data
-  //     }
-  //   } catch (err) {
-  //     error.value = err.response?.data?.message || 'Gagal memuat dompet.'
-  //   } finally {
-  //     loading.value = false
-  //   }
-  // }
+  const fetchWallets = async () => {
+    try {
+      const response = await apiClient.get('/wallets')
+      const data = response.data?.data ?? response.data
+      if (Array.isArray(data)) {
+        wallets.value = data
+      }
+      return { success: true, data: wallets.value }
+    } catch (err) {
+      return { success: false, error: err.response?.data?.message ?? err.message ?? 'Gagal memuat dompet.' }
+    }
+  }
+
+  const addWallet = async (payload) => {
+    try {
+      const response = await apiClient.post('/wallets', {
+        name: payload.name,
+        initialBalance: Number(payload.initialBalance ?? 0),
+      })
+      const data = response.data?.data ?? response.data
+      await fetchWallets()
+      return { success: true, data }
+    } catch (err) {
+      return { success: false, error: err.response?.data?.message ?? err.message ?? 'Gagal menambah dompet.' }
+    }
+  }
+
+  const updateWallet = async (id, payload) => {
+    try {
+      const response = await apiClient.put(`/wallets/${id}`, {
+        name: payload.name,
+        initialBalance: Number(payload.initialBalance ?? 0),
+      })
+      const data = response.data?.data ?? response.data
+      await fetchWallets()
+      return { success: true, data }
+    } catch (err) {
+      return { success: false, error: err.response?.data?.message ?? err.message ?? 'Gagal memperbarui dompet.' }
+    }
+  }
+
+  const deleteWallet = async (id) => {
+    try {
+      await apiClient.delete(`/wallets/${id}`)
+      wallets.value = wallets.value.filter((w) => w.id !== id)
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: err.response?.data?.message ?? err.message ?? 'Gagal menghapus dompet.' }
+    }
+  }
 
   const addTransaction = async (txData) => {
     try {
       const response = await apiClient.post('/transactions', txData)
-      const newTx = response.data?.data || response.data
+      const newTx = response.data?.data ?? response.data
       if (Array.isArray(rawTransactions.value)) {
         rawTransactions.value.unshift(newTx)
       }
@@ -100,14 +134,14 @@ export const useFinanceStore = defineStore('finance', () => {
       }
       return { success: true }
     } catch (err) {
-      return { success: false, error: err.response?.data?.message || 'Gagal menyimpan transaksi.' }
+      return { success: false, error: err.response?.data?.message ?? err.message ?? 'Gagal menyimpan transaksi.' }
     }
   }
 
   const updateTransaction = async (id, txData) => {
     try {
       const response = await apiClient.put(`/transactions/${id}`, txData)
-      const updatedTx = response.data?.data || response.data || { id, ...txData }
+      const updatedTx = response.data?.data ?? response.data ?? { id, ...txData }
       const idx = rawTransactions.value.findIndex((t) => (t.id === id || t.transactionId === id))
       if (idx !== -1) {
         rawTransactions.value[idx] = { ...rawTransactions.value[idx], ...updatedTx }
@@ -120,7 +154,7 @@ export const useFinanceStore = defineStore('finance', () => {
       }
       return { success: true, data: updatedTx }
     } catch (err) {
-      return { success: false, error: err.response?.data?.message || 'Gagal memperbarui transaksi.' }
+      return { success: false, error: err.response?.data?.message ?? err.message ?? 'Gagal memperbarui transaksi.' }
     }
   }
 
@@ -133,7 +167,7 @@ export const useFinanceStore = defineStore('finance', () => {
       }
       return { success: true }
     } catch (err) {
-      return { success: false, error: err.response?.data?.message || 'Gagal menghapus transaksi.' }
+      return { success: false, error: err.response?.data?.message ?? err.message ?? 'Gagal menghapus transaksi.' }
     }
   }
 
@@ -163,88 +197,82 @@ export const useFinanceStore = defineStore('finance', () => {
       const response = await apiClient.get('/reports/summary', {
         params: { from, to },
       })
-      const data = response.data?.data || response.data
+      const data = response.data?.data ?? response.data
       if (data && typeof data === 'object') {
         summary.value = data
       }
     } catch (err) {
-      error.value = err.response?.data?.message || 'Gagal memuat summary.'
+      error.value = err.response?.data?.message ?? err.message ?? 'Gagal memuat summary.'
     } finally {
       loading.value = false
     }
   }
 
-  const fetchBudgets = async (month) => {
+  const fetchBudgets = async (date) => {
     try {
-      const params = month !== undefined ? { month } : {}
+      const params = date !== undefined ? { month: date } : {}
       const response = await apiClient.get('/budgets', { params })
-      const data = response.data?.data || response.data
+      const data = response.data?.data ?? response.data
       if (Array.isArray(data)) {
         budgets.value = data
       }
       return { success: true, data: budgets.value }
     } catch (err) {
-      return { success: false, error: err.response?.data?.message || 'Gagal memuat anggaran.' }
+      return { success: false, error: err.response?.data?.message ?? err.message ?? 'Gagal memuat anggaran.' }
     }
   }
 
   const getBudget = async (id) => {
     try {
       const response = await apiClient.get(`/budgets/${id}`)
-      return { success: true, data: response.data?.data || response.data }
+      return { success: true, data: response.data?.data ?? response.data }
     } catch (err) {
-      return { success: false, error: err.response?.data?.message || 'Gagal memuat detail anggaran.' }
+      return { success: false, error: err.response?.data?.message ?? err.message ?? 'Gagal memuat detail anggaran.' }
     }
   }
 
   const saveBudget = async (payload) => {
     try {
-      // PUT /budgets (create & edit) {categoryId, Month, Amount}
+      // PUT /budgets {categoryId, month (Y-m-d), amount}
       const body = {
         categoryId: payload.categoryId,
-        Month: Number(payload.month),
-        month: Number(payload.month),
-        Amount: Number(payload.amount),
+        month: payload.month,
         amount: Number(payload.amount),
       }
       if (payload.id) {
         body.id = payload.id
-        body.uuid = payload.id
       }
       const response = await apiClient.put('/budgets', body)
-      const data = response.data?.data || response.data
+      const data = response.data?.data ?? response.data
 
-      // Refresh / update local budgets
       await fetchBudgets(payload.month)
       return { success: true, data }
     } catch (err) {
-      return { success: false, error: err.response?.data?.message || 'Gagal menyimpan anggaran.' }
+      return { success: false, error: err.response?.data?.message ?? err.message ?? 'Gagal menyimpan anggaran.' }
     }
   }
 
-  const deleteBudget = async (id, currentMonth) => {
+  const deleteBudget = async (id) => {
     try {
       await apiClient.delete(`/budgets/${id}`)
       budgets.value = budgets.value.filter((b) => (b.id !== id && b.uuid !== id))
       return { success: true }
     } catch (err) {
-      return { success: false, error: err.response?.data?.message || 'Gagal menghapus anggaran.' }
+      return { success: false, error: err.response?.data?.message ?? err.message ?? 'Gagal menghapus anggaran.' }
     }
   }
 
   const copyBudgets = async ({ fromMonth, toMonth }) => {
     try {
       const body = {
-        fromMonth: Number(fromMonth),
-        toMonth: Number(toMonth),
-        FromMonth: Number(fromMonth),
-        ToMonth: Number(toMonth),
+        fromMonth,
+        toMonth,
       }
       const response = await apiClient.post('/budgets/copy', body)
       await fetchBudgets(toMonth)
-      return { success: true, data: response.data?.data || response.data }
+      return { success: true, data: response.data?.data ?? response.data }
     } catch (err) {
-      return { success: false, error: err.response?.data?.message || 'Gagal menyalin anggaran.' }
+      return { success: false, error: err.response?.data?.message ?? err.message ?? 'Gagal menyalin anggaran.' }
     }
   }
 
@@ -281,6 +309,11 @@ export const useFinanceStore = defineStore('finance', () => {
     saveBudget,
     deleteBudget,
     copyBudgets,
+    wallets,
+    fetchWallets,
+    addWallet,
+    updateWallet,
+    deleteWallet,
     reset,
     loadInitialData,
     fetchSummary,

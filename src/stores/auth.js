@@ -25,26 +25,27 @@ export const useAuthStore = defineStore('auth', () => {
 
   /**
    * Login
-   * BE response: { accessToken, refreshToken, userId, name, email }
+   * BE response: ApiResponse<{ accessToken, refreshToken, userId, name, email }>
    */
   const login = async (credentials) => {
     loading.value = true
     error.value   = null
     try {
-      const { data } = await apiClient.post('/auth/login', credentials)
+      const { data: apiResp } = await apiClient.post('/auth/login', credentials)
 
-      const accessToken = data.accessToken
+      const payload    = apiResp.data
+      const accessToken = payload.accessToken
       const userData = {
-        id:    data.userId,
-        name:  data.name,
-        email: data.email,
+        id:    payload.userId,
+        name:  payload.name,
+        email: payload.email,
       }
 
       persist(accessToken, userData)
       return { success: true }
     } catch (err) {
       error.value = err.response?.data?.message
-        ?? err.response?.data?.title
+        ?? err.message
         ?? 'Email atau password salah.'
       return { success: false }
     } finally {
@@ -54,27 +55,28 @@ export const useAuthStore = defineStore('auth', () => {
 
   /**
    * Register
-   * BE response: { accessToken, refreshToken, userId, name, email }
+   * BE response: ApiResponse<{ accessToken, refreshToken, userId, name, email }>
    * BE langsung balas token → auto login ke dashboard
    */
   const register = async (payload) => {
     loading.value = true
     error.value   = null
     try {
-      const { data } = await apiClient.post('/auth/register', payload)
+      const { data: apiResp } = await apiClient.post('/auth/register', payload)
 
-      const accessToken = data.accessToken
+      const tokenData   = apiResp.data
+      const accessToken = tokenData.accessToken
       const userData = {
-        id:    data.userId,
-        name:  data.name,
-        email: data.email,
+        id:    tokenData.userId,
+        name:  tokenData.name,
+        email: tokenData.email,
       }
 
       persist(accessToken, userData)
       return { success: true, autoLogin: true }
     } catch (err) {
       error.value = err.response?.data?.message
-        ?? err.response?.data?.title
+        ?? err.message
         ?? 'Pendaftaran gagal. Coba lagi.'
       return { success: false }
     } finally {
@@ -88,6 +90,30 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('manaduitnya_token')
     localStorage.removeItem('manaduitnya_user')
     useFinanceStore().reset()
+  }
+
+  const logoutApi = async () => {
+    try {
+      await apiClient.post('/auth/logout')
+    } catch {
+      // tetap logout lokal meski BE gagal
+    } finally {
+      logout()
+    }
+  }
+
+  const fetchMe = async () => {
+    try {
+      const { data: apiResp } = await apiClient.get('/auth/me')
+      const me = apiResp.data ?? apiResp
+      if (me) {
+        user.value = { id: me.userId ?? me.id, name: me.name, email: me.email }
+        localStorage.setItem('manaduitnya_user', JSON.stringify(user.value))
+      }
+      return { success: true, data: me }
+    } catch (err) {
+      return { success: false, error: err.response?.data?.message ?? err.message ?? 'Gagal memuat profil.' }
+    }
   }
 
   const isTokenExpire = (t) => {
@@ -118,6 +144,8 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     register,
     logout,
+    logoutApi,
+    fetchMe,
     checkSession,
   }
 })

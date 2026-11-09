@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="space-y-5 sm:space-y-6">
     <!-- Top Action Bar -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -409,7 +409,7 @@
               :disabled="isSubmitting"
               class="px-5 py-2.5 text-xs sm:text-sm font-bold text-white bg-brand hover:bg-brand-dark rounded-xl shadow-md shadow-brand/20 transition-all ios-active-scale disabled:opacity-50 flex items-center gap-1.5"
             >
-              <span v-if="isSubmitting" class="animate-spin mr-1">⌛</span>
+              <span v-if="isSubmitting" class="animate-spin mr-1">?</span>
               <span>{{ isEditing ? 'Simpan Perubahan' : 'Buat Anggaran' }}</span>
             </button>
           </div>
@@ -446,11 +446,11 @@
             <div>
               <label class="block text-xs font-semibold text-ink/70 mb-1">Dari Bulan (Sumber)</label>
               <select
-                v-model.number="copyForm.fromMonth"
+                v-model="copyForm.fromMonth"
                 required
                 class="w-full px-3 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand bg-white text-ink"
               >
-                <option v-for="(name, idx) in monthNames" :key="idx" :value="idx + 1">
+                <option v-for="(name, idx) in monthNames" :key="idx" :value="monthDateOptions[idx]">
                   {{ name }} (Bulan {{ idx + 1 }})
                 </option>
               </select>
@@ -460,11 +460,11 @@
             <div>
               <label class="block text-xs font-semibold text-ink/70 mb-1">Ke Bulan (Tujuan)</label>
               <select
-                v-model.number="copyForm.toMonth"
+                v-model="copyForm.toMonth"
                 required
                 class="w-full px-3 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand bg-white text-ink"
               >
-                <option v-for="(name, idx) in monthNames" :key="idx" :value="idx + 1">
+                <option v-for="(name, idx) in monthNames" :key="idx" :value="monthDateOptions[idx]">
                   {{ name }} (Bulan {{ idx + 1 }})
                 </option>
               </select>
@@ -485,7 +485,7 @@
               :disabled="isSubmitting"
               class="px-5 py-2.5 text-xs sm:text-sm font-bold text-white bg-brand hover:bg-brand-dark rounded-xl shadow-md shadow-brand/20 transition-all ios-active-scale disabled:opacity-50 flex items-center gap-1.5"
             >
-              <span v-if="isSubmitting" class="animate-spin mr-1">⌛</span>
+              <span v-if="isSubmitting" class="animate-spin mr-1">?</span>
               <span>Salin Sekarang</span>
             </button>
           </div>
@@ -541,15 +541,23 @@ const isEditing = ref(false)
 const budgetForm = reactive({
   id: null,
   categoryId: '',
-  month: 1,
+  month: '',
   amount: 0,
 })
 
 const showCopyModal = ref(false)
 const copyForm = reactive({
-  fromMonth: 1,
-  toMonth: 1,
+  fromMonth: '',
+  toMonth: '',
 })
+
+// Options date string untuk select copyModal (pakai selectedYear)
+const monthDateOptions = computed(() =>
+  monthNames.map((_, i) => {
+    const mm = String(i + 1).padStart(2, '0')
+    return selectedYear.value + '-' + mm + '-01'
+  })
+)
 
 // Categories
 const expenseCategories = computed(() => {
@@ -570,7 +578,7 @@ const loadBudgetData = async () => {
     const to = `${y}-${String(m + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
 
     await Promise.all([
-      financeStore.fetchBudgets(monthNumber.value),
+      financeStore.fetchBudgets(from),
       financeStore.fetchTransactions(from, to),
       financeStore.fetchCategories(),
     ])
@@ -608,23 +616,21 @@ const refreshData = async () => {
   isRefreshing.value = false
 }
 
-// Current month's budgets computed with spent & percentage calculation
+// Normalisasi field response BE ke format seragam
 const currentMonthBudgets = computed(() => {
-  const currentM = monthNumber.value
+  const yymm = selectedYear.value + '-' + String(monthNumber.value).padStart(2, '0')
 
-  // Filter budgets belonging to this month (or all if month not filtered by backend)
   const list = financeStore.budgets.filter((b) => {
-    const bMonth = Number(b.month || b.Month || 0)
-    return bMonth === 0 || bMonth === currentM
+    if (!b.month) return true
+    return b.month.startsWith(yymm)
   })
 
-  // Calculate actual spending from month's transactions
   return list.map((b) => {
-    const catId = b.categoryId || b.CategoryId
-    const catName = b.categoryName || b.category?.name || b.category || ''
-    const color = b.categoryColor || b.category?.color || b.color || ''
+    const catId = b.categoryId
+    const catName = b.category_name || b.categoryName || ''
+    const color = b.category_color || b.categoryColor || ''
+    const id = b.uuid || b.id
 
-    // Calculate actual spent in this month for this category
     let spent = b.spent !== undefined ? Number(b.spent) : null
     if (spent === null || isNaN(spent)) {
       spent = financeStore.transactions
@@ -638,13 +644,13 @@ const currentMonthBudgets = computed(() => {
         .reduce((sum, tx) => sum + Number(tx.amount || 0), 0)
     }
 
-    const amount = Number(b.amount || b.Amount || 0)
+    const amount = Number(b.amount || 0)
     const remaining = amount - spent
     const percentage = amount > 0 ? Math.round((spent / amount) * 100) : 0
 
     return {
       ...b,
-      id: b.id || b.uuid || b.Id || b.Uuid,
+      id,
       categoryId: catId,
       categoryName: catName || 'Kategori',
       categoryColor: color,
@@ -652,11 +658,10 @@ const currentMonthBudgets = computed(() => {
       spent,
       remaining,
       percentage,
-      month: b.month || b.Month || currentM,
+      month: b.month || (yymm + '-01'),
     }
   })
 })
-
 // Metrics Overview
 const totalBudgetAmount = computed(() =>
   currentMonthBudgets.value.reduce((sum, b) => sum + b.amount, 0)
@@ -685,7 +690,7 @@ const openAddModal = () => {
   isEditing.value = false
   budgetForm.id = null
   budgetForm.categoryId = expenseCategories.value[0]?.id || ''
-  budgetForm.month = monthNumber.value
+  budgetForm.month = `${selectedYear.value}-${String(monthNumber.value).padStart(2, '0')}-01`
   budgetForm.amount = 0
   showBudgetModal.value = true
 }
@@ -694,7 +699,7 @@ const openEditModal = (budget) => {
   isEditing.value = true
   budgetForm.id = budget.id
   budgetForm.categoryId = budget.categoryId
-  budgetForm.month = budget.month || monthNumber.value
+  budgetForm.month = budget.month || `${selectedYear.value}-${String(monthNumber.value).padStart(2, '0')}-01`
   budgetForm.amount = budget.amount
   showBudgetModal.value = true
 }
@@ -727,7 +732,7 @@ const handleDelete = async (budget) => {
   }
 
   if (navigator.vibrate) navigator.vibrate(15)
-  const result = await financeStore.deleteBudget(budget.id, monthNumber.value)
+  const result = await financeStore.deleteBudget(budget.id)
   if (result.success) {
     await loadBudgetData()
   } else {
@@ -737,12 +742,12 @@ const handleDelete = async (budget) => {
 
 // Modal Copy Budgets
 const openCopyModal = () => {
-  // Default: copy from previous month to current month
-  let prevMonth = monthNumber.value - 1
-  if (prevMonth < 1) prevMonth = 12
-
-  copyForm.fromMonth = prevMonth
-  copyForm.toMonth = monthNumber.value
+  const y = selectedYear.value
+  const m = monthNumber.value
+  const prevM = m === 1 ? 12 : m - 1
+  const prevY = m === 1 ? y - 1 : y
+  copyForm.fromMonth = `${prevY}-${String(prevM).padStart(2, '0')}-01`
+  copyForm.toMonth = `${y}-${String(m).padStart(2, '0')}-01`
   showCopyModal.value = true
 }
 
@@ -764,9 +769,10 @@ const handleCopyBudgets = async () => {
 
   if (result.success) {
     showCopyModal.value = false
-    alert(`Berhasil menyalin anggaran ke bulan ${monthNames[copyForm.toMonth - 1]}!`)
-    // If copied to currently selected month, refresh data
-    if (copyForm.toMonth === monthNumber.value) {
+    const toMonthIdx = Number(copyForm.toMonth.split('-')[1]) - 1
+    alert(`Berhasil menyalin anggaran ke bulan ${monthNames[toMonthIdx]}!`)
+    const currentDateStr = `${selectedYear.value}-${String(monthNumber.value).padStart(2, '0')}-01`
+    if (copyForm.toMonth === currentDateStr) {
       await loadBudgetData()
     }
   } else {

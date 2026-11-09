@@ -21,19 +21,26 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
-// ── Response Interceptor: tangani 401 Unauthorized ──
+// ── Response Interceptor ──
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error.response?.status
     const isAuthEndpoint = error.config?.url?.includes('/auth/')
 
-    // Jika 401 dan bukan dari endpoint auth (login/register),
-    // berarti token expired → paksa logout & redirect ke login
+    // Token expired → paksa logout & redirect ke login
     if (status === 401 && !isAuthEndpoint) {
       localStorage.removeItem('manaduitnya_token')
       localStorage.removeItem('manaduitnya_user')
       window.location.href = '/login'
+    }
+
+    // Jika BE mengembalikan ApiResponse standar, angkat message-nya ke error.message
+    // supaya semua catch block bisa pakai err.message sebagai fallback
+    const apiBody = error.response?.data
+    if (apiBody && typeof apiBody === 'object' && 'success' in apiBody) {
+      const msg = apiBody.message || apiBody.error?.code || 'Terjadi kesalahan.'
+      error.message = msg
     }
 
     return Promise.reject(error)

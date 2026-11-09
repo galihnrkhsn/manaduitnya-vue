@@ -27,16 +27,17 @@ apiClient.interceptors.response.use(
   (error) => {
     const status = error.response?.status
     const isAuthEndpoint = error.config?.url?.includes('/auth/')
+    const hasToken = !!localStorage.getItem('manaduitnya_token')
 
-    // Token expired → paksa logout & redirect ke login
-    if (status === 401 && !isAuthEndpoint) {
+    // Hanya paksa logout jika: ada token tersimpan, dapat 401, dan bukan dari auth endpoint
+    // Ini artinya token benar-benar ditolak BE (expired/invalid), bukan salah password
+    if (status === 401 && !isAuthEndpoint && hasToken) {
       localStorage.removeItem('manaduitnya_token')
       localStorage.removeItem('manaduitnya_user')
       window.location.href = '/login'
     }
 
-    // Jika BE mengembalikan ApiResponse standar, angkat message-nya ke error.message
-    // supaya semua catch block bisa pakai err.message sebagai fallback
+    // Angkat message dari ApiResponse standar ke error.message
     const apiBody = error.response?.data
     if (apiBody && typeof apiBody === 'object' && 'success' in apiBody) {
       const msg = apiBody.message || apiBody.error?.code || 'Terjadi kesalahan.'

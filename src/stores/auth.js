@@ -119,9 +119,9 @@ export const useAuthStore = defineStore('auth', () => {
   const isTokenExpire = (t) => {
     try {
       const payload = JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
-      return payload.exp * 1000 < Date.now()
+      return payload.exp * 1000 < (Date.now() - 60000)
     } catch {
-      return true
+      return false
     }
   }
 
@@ -131,7 +131,7 @@ export const useAuthStore = defineStore('auth', () => {
       logout()
       return false
     }
-    return false
+    return true
   }
 
   return {

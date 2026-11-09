@@ -1,6 +1,9 @@
 <template>
   <!-- Top Navigation Bar (with iOS Safe Area Top padding) -->
-  <header class="bg-surface/90 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-30 pt-safe">
+  <header
+    class="bg-surface/90 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-30 pt-safe transition-transform duration-300 ease-in-out"
+    :class="isNavHidden ? '-translate-y-full md:translate-y-0' : 'translate-y-0'"
+  >
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-14 sm:h-16">
         <!-- Logo & Brand -->
@@ -131,11 +134,68 @@
 </template>
 
 <script setup>
+import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { Wallet, LayoutDashboard, Receipt, CreditCard, Plus, LogOut, WalletCards } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 
 const emit = defineEmits(['open-add-modal'])
+const route = useRoute()
 const authStore = useAuthStore()
+
+const isNavHidden = ref(false)
+let lastScrollY = 0
+const SCROLL_THRESHOLD = 8
+
+const handleScroll = () => {
+  // Hanya aktif di mobile / layar kecil (< 768px)
+  if (window.innerWidth >= 768) {
+    if (isNavHidden.value) isNavHidden.value = false
+    return
+  }
+
+  const currentScrollY = window.scrollY || window.pageYOffset
+
+  // Jika berada di dekat posisi paling atas (atau efek bouncing iOS)
+  if (currentScrollY <= 20) {
+    isNavHidden.value = false
+    lastScrollY = Math.max(0, currentScrollY)
+    return
+  }
+
+  const delta = currentScrollY - lastScrollY
+  if (Math.abs(delta) < SCROLL_THRESHOLD) {
+    return
+  }
+
+  if (delta > 0 && currentScrollY > 60) {
+    // Scroll ke bawah -> sembunyikan navbar & tab bar
+    isNavHidden.value = true
+  } else if (delta < 0) {
+    // Scroll ke atas -> tampilkan kembali navbar & tab bar
+    isNavHidden.value = false
+  }
+
+  lastScrollY = currentScrollY
+}
+
+// Selalu tampilkan navbar saat berpindah halaman
+watch(
+  () => route.fullPath,
+  () => {
+    isNavHidden.value = false
+    lastScrollY = 0
+  }
+)
+
+onMounted(() => {
+  lastScrollY = window.scrollY || 0
+  window.addEventListener('scroll', handleScroll, { passive: true })
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
+})
 
 const triggerAdd = () => {
   if (navigator.vibrate) {

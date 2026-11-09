@@ -189,7 +189,6 @@ const getNowDatetimeLocal = () => {
 }
 
 const form = reactive({
-  title: '',
   amount: '',
   type: 'EXPENSE',
   categoryId: '',
@@ -222,7 +221,6 @@ watch(
   async (open) => {
     if (!open) return
 
-    form.title = ''
     form.amount = ''
     form.type = 'EXPENSE'
     form.notes = ''

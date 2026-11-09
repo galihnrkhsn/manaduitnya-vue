@@ -20,12 +20,9 @@
       </button>
     </div>
 
-    <!-- Loading -->
-    <div v-if="loading" class="grid grid-cols-1 gap-3">
-      <div v-for="i in 4" :key="i" class="h-14 bg-slate-100 rounded-2xl animate-pulse" />
-    </div>
+    <SkeletonLoader v-if="loading" type="list" :count="5" />
 
-    <!-- Error -->
+        <!-- Error -->
     <div v-else-if="error" class="flex items-start gap-2.5 p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-xs">
       <AlertCircle class="w-4 h-4 shrink-0 mt-0.5" />
       <span>{{ error }}</span>
@@ -111,7 +108,9 @@ import { ref, computed, onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ChevronLeft, Pencil, Trash2, X, Loader2, AlertCircle } from 'lucide-vue-next'
 import apiClient from '@/services/api'
+import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import { useFinanceStore } from '@/stores/finance'
+
 
 const router = useRouter()
 const financeStore = useFinanceStore()

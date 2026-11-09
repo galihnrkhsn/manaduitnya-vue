@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="space-y-5 sm:space-y-6">
     <!-- Top Action Bar & Month Selector -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -205,28 +205,16 @@
         </div>
         <div v-if="totalTransferFiltered > 0" class="text-indigo-600 flex items-center gap-1 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-200">
           <span class="text-[10px] font-sans font-medium text-indigo-500">Transfer:</span>
-          <span>⇄ {{ formatCurrency(totalTransferFiltered) }}</span>
+          <span>? {{ formatCurrency(totalTransferFiltered) }}</span>
         </div>
       </div>
     </div>
 
     <!-- Transactions List & Table Container -->
     <div class="bg-surface rounded-2xl sm:rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs">
-      <!-- Loading Skeleton State -->
-      <div v-if="financeStore.loading && totalFilteredCount === 0" class="p-6 space-y-4">
-        <div v-for="i in 5" :key="i" class="animate-pulse flex items-center justify-between py-2">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-slate-200 rounded-xl"></div>
-            <div class="space-y-1.5">
-              <div class="w-36 h-3.5 bg-slate-200 rounded"></div>
-              <div class="w-24 h-2.5 bg-slate-100 rounded"></div>
-            </div>
-          </div>
-          <div class="w-20 h-4 bg-slate-200 rounded"></div>
-        </div>
-      </div>
+      <SkeletonLoader v-if="financeStore.loading && totalFilteredCount === 0" type="transaction" :count="6" />
 
-      <!-- Main Content (Both Desktop Table & Mobile List) -->
+            <!-- Main Content (Both Desktop Table & Mobile List) -->
       <div v-else-if="groupedTransactions.length > 0">
         <!-- Desktop Table View (>= 768px) -->
         <div class="hidden md:block overflow-x-auto">
@@ -247,7 +235,7 @@
                 <tr class="bg-slate-100/70 border-y border-slate-200/60 text-xs font-bold text-ink/75">
                   <td colspan="3" class="py-2.5 px-5">
                     <span class="inline-flex items-center gap-1.5">
-                      <span class="text-brand font-black">•</span>
+                      <span class="text-brand font-black">�</span>
                       <span>{{ group.dayTitle }}</span>
                     </span>
                   </td>
@@ -259,7 +247,7 @@
                       -{{ formatCurrency(group.dayExpense) }}
                     </span>
                     <span v-if="group.dayTransfer > 0" class="text-indigo-600">
-                      ⇄ {{ formatCurrency(group.dayTransfer) }}
+                      ? {{ formatCurrency(group.dayTransfer) }}
                     </span>
                   </td>
                 </tr>
@@ -315,7 +303,7 @@
                   </td>
                   <td class="py-3 px-4 text-ink/70 font-medium text-xs">
                     <span v-if="getTxType(tx) === 'TRANSFER' && (tx.toWalletName || tx.destinationWalletName)">
-                      {{ tx.walletName || tx.wallet }} → {{ tx.toWalletName || tx.destinationWalletName }}
+                      {{ tx.walletName || tx.wallet }} ? {{ tx.toWalletName || tx.destinationWalletName }}
                     </span>
                     <span v-else>
                       {{ tx.walletName || tx.wallet || '-' }}
@@ -359,7 +347,7 @@
                   -{{ formatCurrency(group.dayExpense) }}
                 </span>
                 <span v-if="group.dayTransfer > 0" class="text-indigo-600">
-                  ⇄ {{ formatCurrency(group.dayTransfer) }}
+                  ? {{ formatCurrency(group.dayTransfer) }}
                 </span>
               </div>
             </div>
@@ -407,9 +395,9 @@
                         ></span>
                         <span>{{ tx.categoryName || tx.category || 'Umum' }}</span>
                       </span>
-                      <span>•</span>
+                      <span>�</span>
                       <span v-if="getTxType(tx) === 'TRANSFER' && (tx.toWalletName || tx.destinationWalletName)">
-                        {{ tx.walletName || tx.wallet }} → {{ tx.toWalletName || tx.destinationWalletName }}
+                        {{ tx.walletName || tx.wallet }} ? {{ tx.toWalletName || tx.destinationWalletName }}
                       </span>
                       <span v-else>
                         {{ tx.walletName || tx.wallet || '-' }}
@@ -498,6 +486,7 @@ import {
   Calendar,
 } from 'lucide-vue-next'
 import { useFinanceStore } from '@/stores/finance'
+import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import TransactionEditModal from '@/components/TransactionEditModal.vue'
 
 defineEmits(['open-add-modal'])
@@ -612,7 +601,7 @@ const getAmountClass = (tx) => {
 const getAmountPrefix = (tx) => {
   const type = getTxType(tx)
   if (type === 'INCOME') return '+ '
-  if (type === 'TRANSFER') return '⇄ '
+  if (type === 'TRANSFER') return '? '
   return '- '
 }
 
@@ -773,8 +762,8 @@ const formatDayHeader = (dateStr) => {
     year: 'numeric',
   }).format(date)
 
-  if (txDay === today) return `Hari ini • ${fullDate}`
-  if (txDay === yesterday) return `Kemarin • ${fullDate}`
+  if (txDay === today) return `Hari ini � ${fullDate}`
+  if (txDay === yesterday) return `Kemarin � ${fullDate}`
   return fullDate
 }
 

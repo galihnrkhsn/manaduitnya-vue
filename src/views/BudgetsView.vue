@@ -178,23 +178,9 @@
       </div>
     </div>
 
-    <!-- Loading Skeleton -->
-    <div v-if="isLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <div v-for="i in 3" :key="i" class="p-5 bg-surface rounded-3xl border border-slate-200/80 shadow-xs animate-pulse space-y-4">
-        <div class="flex justify-between items-center">
-          <div class="h-4 bg-slate-200 rounded w-24"></div>
-          <div class="h-5 bg-slate-200 rounded-full w-14"></div>
-        </div>
-        <div class="h-6 bg-slate-200 rounded w-36"></div>
-        <div class="h-3 bg-slate-200 rounded-full w-full"></div>
-        <div class="flex justify-between">
-          <div class="h-3 bg-slate-200 rounded w-20"></div>
-          <div class="h-3 bg-slate-200 rounded w-20"></div>
-        </div>
-      </div>
-    </div>
+    <SkeletonLoader v-if="isLoading" type="card" :count="3" cols="3" />
 
-    <!-- Empty State -->
+        <!-- Empty State -->
     <div
       v-else-if="currentMonthBudgets.length === 0"
       class="bg-surface rounded-3xl border border-slate-200/80 p-8 sm:p-12 text-center shadow-xs space-y-4"
@@ -497,6 +483,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
+import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import {
   Plus,
   Copy,

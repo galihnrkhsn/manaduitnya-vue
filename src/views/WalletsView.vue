@@ -11,12 +11,9 @@
       </button>
     </div>
 
-    <!-- Loading -->
-    <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <div v-for="i in 3" :key="i" class="h-40 bg-slate-100 rounded-3xl animate-pulse" />
-    </div>
+    <SkeletonLoader v-if="loading" type="wallet-card" :count="3" cols="3" />
 
-    <!-- Error -->
+        <!-- Error -->
     <div v-else-if="error" class="flex items-start gap-2.5 p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-xs">
       <AlertCircle class="w-4 h-4 shrink-0 mt-0.5" />
       <span>{{ error }}</span>
@@ -118,6 +115,7 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { Plus, CreditCard, X, Loader2, AlertCircle, Pencil, Banknote, Wallet, TrendingUp, Smartphone } from 'lucide-vue-next'
 import CurrencyInput from '@/components/CurrencyInput.vue'
 import { useFinanceStore } from '@/stores/finance'
+import SkeletonLoader from '@/components/SkeletonLoader.vue'
 
 const financeStore = useFinanceStore()
 

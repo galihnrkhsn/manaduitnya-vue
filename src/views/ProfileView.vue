@@ -19,7 +19,9 @@
       <div v-if="loading" class="text-xs text-ink/40">Memuat profil...</div>
     </div>
 
-    <!-- Info Detail -->
+    <SkeletonLoader v-if="loading" type="list" :count="3" />
+
+        <!-- Info Detail -->
     <div class="bg-surface rounded-2xl border border-slate-200/80 overflow-hidden divide-y divide-slate-100">
       <div class="flex items-center justify-between px-4 py-3.5">
         <span class="text-xs font-semibold text-ink/50">Nama</span>
@@ -58,6 +60,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ChevronLeft, LogOut, AlertCircle } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
+import SkeletonLoader from '@/components/SkeletonLoader.vue'
 
 const authStore = useAuthStore()
 const router = useRouter()

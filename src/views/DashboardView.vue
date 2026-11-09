@@ -70,6 +70,8 @@
       </router-link>
     </div>
 
+    <SkeletonLoader v-if="financeStore.loading && !financeStore.totalBalance" type="stat" :count="3" cols="3" />
+
     <!-- Stats Cards Row -->
     <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
       <StatCard
@@ -168,20 +170,12 @@
               <Wifi class="w-4 h-4 text-white/70 rotate-90" />
             </div>
           </div>
-
-          <!-- Card Middle: Simulated Card Number -->
-          <div class="relative z-10 my-auto">
-            <p class="text-xs sm:text-sm font-mono tracking-widest text-white/80">
-              •••• •••• •••• {{ getCardTail(wallet.id, idx) }}
-            </p>
-          </div>
-
           <!-- Card Bottom: Balance -->
           <div class="relative z-10 pt-2 border-t border-white/15 flex items-end justify-between">
             <div>
               <p class="text-[9px] sm:text-[10px] text-white/70 uppercase tracking-wider font-medium">Saldo Tersedia</p>
               <p class="text-base sm:text-lg font-bold font-mono tracking-tight text-white">
-                {{ isBalanceHidden ? 'Rp ••••••••' : formatCurrency(wallet.balance) }}
+                {{ isBalanceHidden ? 'Rp ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' : formatCurrency(wallet.balance) }}
               </p>
             </div>
             <CreditCard class="w-4 h-4 text-white/60 mb-1" />
@@ -255,7 +249,7 @@
                   ></span>
                   <span>{{ tx.categoryName || tx.category || 'Umum' }}</span>
                 </span>
-                <span>•</span>
+                <span>ï¿½</span>
                 <span v-if="getTxType(tx) === 'TRANSFER' && (tx.toWalletName || tx.destinationWalletName)">
                   {{ tx.walletName || tx.wallet }} ? {{ tx.toWalletName || tx.destinationWalletName }}
                 </span>
@@ -272,7 +266,7 @@
               ]"
             >
               {{ getAmountPrefix(tx) }}
-              {{ isBalanceHidden ? 'Rp ••••••' : formatCurrency(tx.amount) }}
+              {{ isBalanceHidden ? 'Rp ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' : formatCurrency(tx.amount) }}
             </p>
             <p class="text-[10px] text-ink/40 mt-0.5">
               {{ formatDate(tx.transactionDate) }}
@@ -320,6 +314,7 @@ import {
 } from 'lucide-vue-next'
 import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import StatCard from '@/components/StatCard.vue'
+import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useFinanceStore } from '@/stores/finance'
 

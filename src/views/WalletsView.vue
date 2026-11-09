@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
@@ -77,13 +77,10 @@
           </div>
           <div>
             <label class="block text-xs font-semibold text-ink/70 mb-1">Saldo Awal (Rp)</label>
-            <input
-              v-model.number="newWallet.balance"
-              type="number"
-              min="0"
+            <CurrencyInput
+              v-model="newWallet.balance"
               required
               placeholder="0"
-              class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand bg-card focus:bg-surface text-ink transition-colors"
             />
           </div>
           <div class="flex items-center justify-end gap-2 pt-2">
@@ -110,6 +107,7 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { Plus, CreditCard } from 'lucide-vue-next'
+import CurrencyInput from '@/components/CurrencyInput.vue'
 import { useFinanceStore } from '@/stores/finance'
 
 const financeStore = useFinanceStore()

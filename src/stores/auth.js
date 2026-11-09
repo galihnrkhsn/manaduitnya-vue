@@ -12,10 +12,11 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(() => !!token.value)
 
   // ── Helpers ───────────────────────────────────────────────────
-  const persist = (accessToken, userData) => {
+  const persist = (accessToken, refreshToken, userData) => {
     token.value = accessToken
     user.value  = userData
     localStorage.setItem('manaduitnya_token', accessToken)
+    localStorage.setItem('manaduitnya_refresh_token', refreshToken)
     localStorage.setItem('manaduitnya_user', JSON.stringify(userData))
   }
 
@@ -35,13 +36,14 @@ export const useAuthStore = defineStore('auth', () => {
 
       const payload    = apiResp.data
       const accessToken = payload.accessToken
+      const refreshToken = payload.refreshToken || ''
       const userData = {
         id:    payload.userId,
         name:  payload.name,
         email: payload.email,
       }
 
-      persist(accessToken, userData)
+      persist(accessToken, refreshToken, userData)
       return { success: true }
     } catch (err) {
       error.value = err.response?.data?.message
@@ -66,13 +68,14 @@ export const useAuthStore = defineStore('auth', () => {
 
       const tokenData   = apiResp.data
       const accessToken = tokenData.accessToken
+      const refreshToken = tokenData.refreshToken || ''
       const userData = {
         id:    tokenData.userId,
         name:  tokenData.name,
         email: tokenData.email,
       }
 
-      persist(accessToken, userData)
+      persist(accessToken, refreshToken, userData)
       return { success: true, autoLogin: true }
     } catch (err) {
       error.value = err.response?.data?.message
@@ -88,8 +91,29 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = ''
     user.value  = null
     localStorage.removeItem('manaduitnya_token')
+    localStorage.removeItem('manaduitnya_refresh_token')
     localStorage.removeItem('manaduitnya_user')
     useFinanceStore().reset()
+  }
+
+  const refreshAccessToken = async () => {
+    const refreshToken = localStorage.getItem('manaduitnya_refresh_token')
+    if (!refreshToken) return false
+    try {
+      const { data: apiResp } = await apiClient.post('/auth/refresh', { refreshToken })
+      const payload = apiResp.data
+      if (payload?.accessToken) {
+        localStorage.setItem('manaduitnya_token', payload.accessToken)
+        token.value = payload.accessToken
+        if (payload.refreshToken) {
+          localStorage.setItem('manaduitnya_refresh_token', payload.refreshToken)
+        }
+        return true
+      }
+      return false
+    } catch {
+      return false
+    }
   }
 
   const logoutApi = async () => {
@@ -146,6 +170,7 @@ export const useAuthStore = defineStore('auth', () => {
     logout,
     logoutApi,
     fetchMe,
+    refreshAccessToken,
     checkSession,
   }
 })

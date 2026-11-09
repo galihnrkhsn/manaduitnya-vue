@@ -235,7 +235,7 @@
                 <tr class="bg-slate-100/70 border-y border-slate-200/60 text-xs font-bold text-ink/75">
                   <td colspan="3" class="py-2.5 px-5">
                     <span class="inline-flex items-center gap-1.5">
-                      <span class="text-brand font-black">•</span>
+                      <span class="text-brand font-black"></span>
                       <span>{{ group.dayTitle }}</span>
                     </span>
                   </td>
@@ -395,7 +395,7 @@
                         ></span>
                         <span>{{ tx.categoryName || tx.category || 'Umum' }}</span>
                       </span>
-                      <span>•</span>
+                      <span>-></span>
                       <span v-if="getTxType(tx) === 'TRANSFER' && (tx.toWalletName || tx.destinationWalletName)">
                         {{ tx.walletName || tx.wallet }} ? {{ tx.toWalletName || tx.destinationWalletName }}
                       </span>
@@ -762,8 +762,8 @@ const formatDayHeader = (dateStr) => {
     year: 'numeric',
   }).format(date)
 
-  if (txDay === today) return `Hari ini • ${fullDate}`
-  if (txDay === yesterday) return `Kemarin • ${fullDate}`
+  if (txDay === today) return `Hari ini, ${fullDate}`
+  if (txDay === yesterday) return `Kemarin, ${fullDate}`
   return fullDate
 }
 

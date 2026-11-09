@@ -21,27 +21,73 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
+// ── Refresh token queue (hindari multiple refresh bersamaan) ──
+let isRefreshing = false
+let refreshPromise = null
+
+const doRefresh = async () => {
+  if (isRefreshing && refreshPromise) return refreshPromise
+  isRefreshing = true
+  refreshPromise = (async () => {
+    const refreshToken = localStorage.getItem('manaduitnya_refresh_token')
+    if (!refreshToken) return false
+    try {
+      const { data: apiResp } = await axios.post(
+        `${apiClient.defaults.baseURL}/auth/refresh`,
+        { refreshToken }
+      )
+      const payload = apiResp.data
+      if (payload?.accessToken) {
+        localStorage.setItem('manaduitnya_token', payload.accessToken)
+        if (payload.refreshToken) {
+          localStorage.setItem('manaduitnya_refresh_token', payload.refreshToken)
+        }
+        return true
+      }
+      return false
+    } catch {
+      return false
+    } finally {
+      isRefreshing = false
+      refreshPromise = null
+    }
+  })()
+  return refreshPromise
+}
+
+const forceLogout = () => {
+  localStorage.removeItem('manaduitnya_token')
+  localStorage.removeItem('manaduitnya_refresh_token')
+  localStorage.removeItem('manaduitnya_user')
+  window.location.href = '/login'
+}
+
 // ── Response Interceptor ──
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     const status = error.response?.status
     const isAuthEndpoint = error.config?.url?.includes('/auth/')
     const hasToken = !!localStorage.getItem('manaduitnya_token')
-
-    // Hanya paksa logout jika: ada token tersimpan, dapat 401, dan bukan dari auth endpoint
-    // Ini artinya token benar-benar ditolak BE (expired/invalid), bukan salah password
-    if (status === 401 && !isAuthEndpoint && hasToken) {
-      localStorage.removeItem('manaduitnya_token')
-      localStorage.removeItem('manaduitnya_user')
-      window.location.href = '/login'
-    }
 
     // Angkat message dari ApiResponse standar ke error.message
     const apiBody = error.response?.data
     if (apiBody && typeof apiBody === 'object' && 'success' in apiBody) {
       const msg = apiBody.message || apiBody.error?.code || 'Terjadi kesalahan.'
       error.message = msg
+    }
+
+    // 401 pada endpoint non-auth: coba refresh dulu
+    if (status === 401 && !isAuthEndpoint && hasToken) {
+      const refreshed = await doRefresh()
+      if (refreshed) {
+        // Retry request asli dengan token baru
+        const newToken = localStorage.getItem('manaduitnya_token')
+        error.config.headers.Authorization = `Bearer ${newToken}`
+        return apiClient.request(error.config)
+      }
+      // Refresh gagal → logout
+      forceLogout()
     }
 
     return Promise.reject(error)

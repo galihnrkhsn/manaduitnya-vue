@@ -85,18 +85,6 @@
           />
         </div>
 
-        <!-- Title -->
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Judul / Keterangan Singkat</label>
-          <input
-            v-model="form.title"
-            type="text"
-            required
-            placeholder="Contoh: Makan siang, Gaji, Top-up e-wallet..."
-            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand text-sm bg-slate-50/50 focus:bg-white transition-colors"
-          />
-        </div>
-
         <!-- Category (Only for non-transfer) -->
         <div v-if="form.type !== 'TRANSFER'">
           <label class="block text-xs font-semibold text-slate-600 mb-1">Kategori</label>
@@ -157,7 +145,7 @@
         <div>
           <label class="block text-xs font-semibold text-slate-600 mb-1">Catatan Tambahan (Opsional)</label>
           <textarea
-            v-model="form.notes"
+            v-model="form.note"
             rows="2"
             placeholder="Tulis catatan kecil jika diperlukan..."
             class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand text-xs sm:text-sm bg-slate-50/50 focus:bg-white transition-colors"
@@ -239,14 +227,13 @@ const formatDatetimeLocal = (raw) => {
 
 const form = reactive({
   id: null,
-  title: '',
   amount: 0,
   type: 'EXPENSE',
   categoryId: '',
   walletId: '',
   toWalletId: '',
   datetime: getNowDatetimeLocal(),
-  notes: '',
+  note: '',
 })
 
 const getTxType = (tx) => {
@@ -286,7 +273,6 @@ watch(
 
     const tx = props.transaction
     form.id = tx.id || tx.transactionId || tx.uuid
-    form.title = tx.title || (getTxType(tx) === 'TRANSFER' ? 'Transfer Saldo' : tx.categoryName || '')
     form.amount = Number(tx.amount || 0)
     form.type = getTxType(tx)
 
@@ -308,7 +294,7 @@ watch(
     const rawDate = tx.transactionDate || tx.date
     form.datetime = formatDatetimeLocal(rawDate)
 
-    form.notes = tx.notes || tx.description || ''
+    form.note = tx.note || tx.description || ''
   },
   { immediate: true }
 )
@@ -325,7 +311,6 @@ const handleSubmit = async () => {
 
   const payload = {
     id: form.id,
-    title: form.title,
     amount: Number(form.amount),
     type: numericType,
     walletId: form.walletId,
@@ -333,8 +318,8 @@ const handleSubmit = async () => {
     wallet: selectedWalletObj?.name || '',
     transactionDate: new Date(form.datetime).toISOString(),
     date: form.datetime,
-    notes: form.notes,
-    description: form.notes,
+    note: form.note,
+    description: form.note,
   }
 
   if (form.type === 'TRANSFER') {
@@ -364,7 +349,7 @@ const handleSubmit = async () => {
 }
 
 const handleDelete = async () => {
-  const title = form.title || 'transaksi ini'
+  const title = 'transaksi ini'
   if (!window.confirm(`Yakin ingin menghapus ${title}? Tindakan ini tidak dapat dibatalkan.`)) {
     return
   }

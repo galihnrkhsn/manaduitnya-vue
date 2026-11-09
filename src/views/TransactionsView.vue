@@ -205,7 +205,7 @@
         </div>
         <div v-if="totalTransferFiltered > 0" class="text-indigo-600 flex items-center gap-1 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-200">
           <span class="text-[10px] font-sans font-medium text-indigo-500">Transfer:</span>
-          <span>? {{ formatCurrency(totalTransferFiltered) }}</span>
+          <span>⇄ {{ formatCurrency(totalTransferFiltered) }}</span>
         </div>
       </div>
     </div>
@@ -247,7 +247,7 @@
                       -{{ formatCurrency(group.dayExpense) }}
                     </span>
                     <span v-if="group.dayTransfer > 0" class="text-indigo-600">
-                      ? {{ formatCurrency(group.dayTransfer) }}
+                      ⇄{{ formatCurrency(group.dayTransfer) }}
                     </span>
                   </td>
                 </tr>
@@ -303,7 +303,7 @@
                   </td>
                   <td class="py-3 px-4 text-ink/70 font-medium text-xs">
                     <span v-if="getTxType(tx) === 'TRANSFER' && (tx.toWalletName || tx.destinationWalletName)">
-                      {{ tx.walletName || tx.wallet }} ? {{ tx.toWalletName || tx.destinationWalletName }}
+                      {{ tx.walletName || tx.wallet }} ⇄ {{ tx.toWalletName || tx.destinationWalletName }}
                     </span>
                     <span v-else>
                       {{ tx.walletName || tx.wallet || '-' }}
@@ -347,7 +347,7 @@
                   -{{ formatCurrency(group.dayExpense) }}
                 </span>
                 <span v-if="group.dayTransfer > 0" class="text-indigo-600">
-                  ? {{ formatCurrency(group.dayTransfer) }}
+                  ⇄ {{ formatCurrency(group.dayTransfer) }}
                 </span>
               </div>
             </div>
@@ -395,9 +395,10 @@
                         ></span>
                         <span>{{ tx.categoryName || tx.category || 'Umum' }}</span>
                       </span>
-                      <span>-></span>
+                    </div>
+                    <div class="flex items-center gap-1.5 text-[11px] text-ink/50 mt-0.5">
                       <span v-if="getTxType(tx) === 'TRANSFER' && (tx.toWalletName || tx.destinationWalletName)">
-                        {{ tx.walletName || tx.wallet }} ? {{ tx.toWalletName || tx.destinationWalletName }}
+                        {{ tx.walletName || tx.wallet }} ⇄ {{ tx.toWalletName || tx.destinationWalletName }}
                       </span>
                       <span v-else>
                         {{ tx.walletName || tx.wallet || '-' }}
@@ -601,7 +602,7 @@ const getAmountClass = (tx) => {
 const getAmountPrefix = (tx) => {
   const type = getTxType(tx)
   if (type === 'INCOME') return '+ '
-  if (type === 'TRANSFER') return '? '
+  if (type === 'TRANSFER') return '⇄ '
   return '- '
 }
 
@@ -763,7 +764,6 @@ const formatDayHeader = (dateStr) => {
   }).format(date)
 
   if (txDay === today) return `Hari ini, ${fullDate}`
-  if (txDay === yesterday) return `Kemarin, ${fullDate}`
   return fullDate
 }
 

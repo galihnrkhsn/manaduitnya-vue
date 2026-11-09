@@ -249,9 +249,10 @@
                   ></span>
                   <span>{{ tx.categoryName || tx.category || 'Umum' }}</span>
                 </span>
-                <span>-</span>
+              </div>
+              <div class="flex items-center gap-1.5 text-[11px] text-ink/50 mt-0.5">
                 <span v-if="getTxType(tx) === 'TRANSFER' && (tx.toWalletName || tx.destinationWalletName)">
-                  {{ tx.walletName || tx.wallet }} ? {{ tx.toWalletName || tx.destinationWalletName }}
+                  {{ tx.walletName || tx.wallet }} ⇄ {{ tx.toWalletName || tx.destinationWalletName }}
                 </span>
                 <span v-else>{{ tx.walletName || 'Dompet' }}</span>
               </div>
@@ -311,6 +312,7 @@ import {
   Eye,
   EyeOff,
   Wifi,
+  AlertTriangle,
 } from 'lucide-vue-next'
 import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import StatCard from '@/components/StatCard.vue'

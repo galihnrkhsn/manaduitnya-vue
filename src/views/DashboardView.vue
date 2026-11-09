@@ -175,7 +175,7 @@
             <div>
               <p class="text-[9px] sm:text-[10px] text-white/70 uppercase tracking-wider font-medium">Saldo Tersedia</p>
               <p class="text-base sm:text-lg font-bold font-mono tracking-tight text-white">
-                {{ isBalanceHidden ? 'Rp ��������' : formatCurrency(wallet.balance) }}
+                {{ isBalanceHidden ? 'Rp ********' : formatCurrency(wallet.balance) }}
               </p>
             </div>
             <CreditCard class="w-4 h-4 text-white/60 mb-1" />
@@ -249,7 +249,7 @@
                   ></span>
                   <span>{{ tx.categoryName || tx.category || 'Umum' }}</span>
                 </span>
-                <span>�</span>
+                <span>-</span>
                 <span v-if="getTxType(tx) === 'TRANSFER' && (tx.toWalletName || tx.destinationWalletName)">
                   {{ tx.walletName || tx.wallet }} ? {{ tx.toWalletName || tx.destinationWalletName }}
                 </span>
